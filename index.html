@@ -1,0 +1,508 @@
+<!doctype html>
+<html lang="nb">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Føre</title>
+<meta name="theme-color" content="#0E1C27">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  color-scheme: light;
+  --bg:#EEF3F6; --surface:#FFFFFF; --line:#D3DEE5; --text:#10222F; --muted:#5A6E7B;
+  --go:#23854A; --caution:#A86A00; --stop:#C2341F; --ice:#2D7FA0;
+  --go-bg:#E3F2E8; --caution-bg:#FBF0DA; --stop-bg:#F9E3DF;
+  --cond:"Barlow Condensed", "Roboto Condensed", "Arial Narrow", sans-serif;
+  --body:"Barlow", Roboto, "Segoe UI", sans-serif;
+  box-sizing:border-box;
+}
+@media (prefers-color-scheme: dark){
+  :root{ color-scheme: dark;
+    --bg:#0E1C27; --surface:#172A38; --line:#25404F; --text:#E6EEF2; --muted:#8EA3B0;
+    --go:#6FCB8B; --caution:#F5B83D; --stop:#EE6A55; --ice:#9FD8EA;
+    --go-bg:#183A2B; --caution-bg:#3A311A; --stop-bg:#3D2220; }
+}
+*,*::before,*::after{box-sizing:inherit}
+html,body{margin:0;background:var(--bg);color:var(--text);font-family:var(--body);font-size:17px;line-height:1.45}
+main{max-width:34rem;margin:0 auto;padding:max(1rem, env(safe-area-inset-top)) 1rem calc(2.5rem + env(safe-area-inset-bottom))}
+button,input{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--ice);outline-offset:2px}
+[hidden]{display:none!important}
+
+header{display:flex;justify-content:space-between;align-items:baseline;gap:1rem;margin-bottom:.8rem}
+h1{font-family:var(--cond);font-weight:700;font-size:1.5rem;margin:0}
+.place{color:var(--muted);font-size:.85rem;text-align:right}
+h2{font-family:var(--cond);font-weight:600;font-size:1.2rem;margin:1.6rem 0 .5rem}
+
+.dot{display:inline-block;width:.6rem;height:.6rem;border-radius:50%;flex:none}
+.c-go{color:var(--go)} .c-caution{color:var(--caution)} .c-stop{color:var(--stop)}
+.b-go{background:var(--go)} .b-caution{background:var(--caution)} .b-stop{background:var(--stop)}
+
+/* Akkurat nå */
+.now{background:var(--surface);border:1px solid var(--line);border-left:6px solid var(--lvl);border-radius:12px;padding:1rem 1rem 1.05rem}
+.now[data-level=go]{--lvl:var(--go)} .now[data-level=caution]{--lvl:var(--caution)} .now[data-level=stop]{--lvl:var(--stop)}
+.now-top{display:flex;justify-content:space-between;color:var(--muted);font-size:.9rem}
+.now-top strong{color:var(--text);font-weight:600}
+.now-main{display:flex;align-items:center;gap:.8rem;margin:.45rem 0 .35rem}
+.sign{width:3rem;height:3rem;flex:none}
+.big{font-family:var(--cond);font-weight:700;font-size:2.5rem;line-height:1;color:var(--lvl)}
+.advice{margin:0 0 .7rem;font-weight:500}
+.parts{display:grid;gap:.35rem;font-size:.92rem}
+.parts div{display:flex;gap:.5rem;align-items:baseline}
+.parts b{font-weight:600;white-space:nowrap}
+.parts span{color:var(--muted)}
+
+/* Turer */
+.trips{display:grid;grid-template-columns:1fr 1fr;gap:.6rem;margin-top:.7rem}
+.trip{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:.8rem .85rem;border-top:4px solid var(--lvl)}
+.trip[data-level=go]{--lvl:var(--go)} .trip[data-level=caution]{--lvl:var(--caution)} .trip[data-level=stop]{--lvl:var(--stop)}
+.trip .lbl{font-size:.85rem;color:var(--muted)}
+.trip .lbl strong{color:var(--text);font-weight:600}
+.trip .v{font-family:var(--cond);font-weight:700;font-size:1.55rem;line-height:1.05;margin:.3rem 0 .35rem;color:var(--lvl)}
+.trip .meta{display:flex;justify-content:space-between;align-items:center;font-size:.85rem;color:var(--muted)}
+.trip .dots{display:flex;gap:.3rem}
+.limited{font-size:.82rem;color:var(--muted);margin:.6rem 0 0}
+
+/* Neste 24 timer */
+.hours{display:flex;gap:.35rem;overflow-x:auto;padding:.1rem 0 .5rem;scrollbar-width:thin;scroll-snap-type:x proximity}
+.hour{flex:0 0 3.3rem;text-align:center;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:.35rem 0 .45rem;scroll-snap-align:start}
+.hour.now-h{border-color:var(--text)}
+.hour.trip-h{border-color:var(--ice);border-width:2px}
+.hour .tag{font-size:.68rem;font-weight:600;color:var(--ice);min-height:1em;line-height:1}
+.hour .h{font-size:.8rem;color:var(--muted)}
+.hour .t{font-weight:600}
+.hour .p{font-size:.72rem;color:var(--ice);min-height:1.1em}
+.hour .dots{display:flex;flex-direction:column;align-items:center;gap:.25rem}
+.legend{font-size:.8rem;color:var(--muted);margin:.2rem 0 0}
+
+/* Uka */
+.week{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:.3rem .9rem}
+.wk-head,.wk-row{display:grid;grid-template-columns:3.6rem 1fr 6.4rem 6.4rem;gap:.5rem;align-items:center}
+.wk-head{font-size:.75rem;color:var(--muted);padding:.4rem 0 .2rem}
+.wk-row{padding:.5rem 0;border-top:1px solid var(--line)}
+.wk-row .d{font-weight:600}
+.wk-row .tmp{font-size:.9rem}
+.wk-row .pr{display:block;font-size:.75rem;color:var(--ice)}
+.chip{display:flex;align-items:center;gap:.4rem;font-size:.85rem;font-weight:600;padding:.25rem .5rem;border-radius:999px;white-space:nowrap;overflow:hidden}
+.chip .dot{width:.5rem;height:.5rem}
+.chip[data-level=go]{background:var(--go-bg);color:var(--go)}
+.chip[data-level=caution]{background:var(--caution-bg);color:var(--caution)}
+.chip[data-level=stop]{background:var(--stop-bg);color:var(--stop)}
+.note{font-size:.82rem;color:var(--muted);margin:.5rem 0 0}
+
+/* Sammenleggbare deler */
+details{background:var(--surface);border:1px solid var(--line);border-radius:12px;margin-top:.7rem}
+summary{padding:.8rem 1rem;font-weight:600;cursor:pointer}
+.dbody{padding:0 1rem 1rem}
+dl.facts{display:grid;grid-template-columns:1fr auto;gap:.35rem 1rem;margin:0}
+dl.facts dt{color:var(--muted)} dl.facts dd{margin:0;font-weight:600;text-align:right}
+.dbody p{margin:0 0 .7rem;font-size:.92rem}
+.row{display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;margin-bottom:.7rem}
+.row label{display:flex;gap:.4rem;align-items:center;font-size:.92rem}
+.row input{background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:.4rem .5rem}
+.row input#zip{width:7rem}
+.btn{background:var(--text);color:var(--bg);border:0;border-radius:6px;padding:.5rem .9rem;font-weight:600}
+.btn.ghost{background:transparent;color:var(--text);border:1px solid var(--line)}
+.msg{font-size:.88rem;color:var(--muted);margin:.3rem 0 0}
+.error{color:var(--stop)}
+footer{margin-top:2rem;font-size:.8rem;color:var(--muted)}
+footer a{color:inherit}
+@media (max-width:370px){ .big{font-size:2.1rem} .wk-head,.wk-row{grid-template-columns:3rem 1fr 5.8rem 5.8rem;gap:.35rem} .chip{font-size:.76rem;padding:.25rem .4rem} }
+@media (prefers-reduced-motion:no-preference){
+  .now,.trip{animation:in .35s ease-out both} .trip{animation-delay:.06s} .trip+.trip{animation-delay:.12s}
+  @keyframes in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}} }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Føre</h1>
+    <div class="place"><span id="place"></span><br><span id="status">Henter værdata …</span></div>
+  </header>
+
+  <div id="result" hidden>
+    <section class="now" id="now" aria-live="polite">
+      <div class="now-top"><span>Akkurat nå</span><span id="nowMeta"></span></div>
+      <div class="now-main"><span id="nowSign"></span><div class="big" id="nowBig"></div></div>
+      <p class="advice" id="nowAdvice"></p>
+      <div class="parts" id="nowParts"></div>
+    </section>
+
+    <div class="trips" id="trips"></div>
+    <p class="limited" id="limited" hidden>Appen har lite værhistorikk ennå, så vurderingen av skyggen er usikker. Den blir bedre når du har brukt appen noen dager.</p>
+
+    <h2>Neste 24 timer</h2>
+    <div class="hours" id="hours"></div>
+    <p class="legend">Øverste prikk er veien, nederste er skyggen ved blokka. Blå ramme er turene dine.</p>
+
+    <h2>Neste 7 dager</h2>
+    <div class="week">
+      <div class="wk-head"><span>Dag</span><span>Temp</span><span id="hJob">Til jobb</span><span id="hHome">Hjem</span></div>
+      <div id="week"></div>
+    </div>
+    <p class="note">Grovt estimat. De første to–tre dagene bygger på timevarsel, resten på MET sitt seksttimersvarsel og er mer usikre.</p>
+
+    <details>
+      <summary>Detaljer akkurat nå</summary>
+      <div class="dbody"><dl class="facts" id="facts"></dl></div>
+    </details>
+  </div>
+
+  <details id="settings">
+    <summary>Innstillinger</summary>
+    <div class="dbody">
+      <p>Tidspunktene for turene dine:</p>
+      <div class="row">
+        <label>Til jobb <input type="time" id="tJob" value="08:40"></label>
+        <label>Hjem <input type="time" id="tHome" value="17:00"></label>
+      </div>
+      <p>Appen viser Oslo sentrum som standard. Skriv inn et postnummer for å se et annet sted. Valget lagres bare på telefonen din.</p>
+      <div class="row">
+        <input id="zip" inputmode="numeric" maxlength="4" placeholder="Postnummer" aria-label="Postnummer" autocomplete="postal-code">
+        <button class="btn" id="saveZip">Bruk postnummer</button>
+      </div>
+      <div class="row">
+        <button class="btn ghost" id="useGps">Bruk min posisjon</button>
+        <button class="btn ghost" id="resetOslo">Tilbake til Oslo sentrum</button>
+      </div>
+      <p class="msg" id="setMsg"></p>
+    </div>
+  </details>
+
+  <footer>
+    Værdata fra <a href="https://www.met.no/" rel="noopener">MET Norway</a> (CC BY 4.0). Postnummeroppslag fra Kartverket (NLOD).
+    Vurderingen er et estimat basert på lufttemperatur, nedbør, fukt, skydekke og vind. Det finnes ikke målt bakketemperatur der du kjører, så bruk øynene også. Broer fryser ofte før resten av veien.
+  </footer>
+</main>
+
+<script>
+(() => {
+"use strict";
+const API = "https://api.met.no/weatherapi/locationforecast/2.0/complete";
+const KEY = { loc:"fore.loc", hist:"fore.hist", job:"fore.tjob", home:"fore.thome" };
+const DEFAULT_LOC = { lat: 59.9133, lon: 10.7522, name: "Oslo sentrum" };
+const $ = id => document.getElementById(id);
+const store = {
+  get(k, d){ try{ const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; }catch{ return d; } },
+  set(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch{} },
+  del(k){ try{ localStorage.removeItem(k); }catch{} }
+};
+let LOC = store.get(KEY.loc, null) || DEFAULT_LOC;
+
+/* ---------- Sol og bakketemperatur ---------- */
+function sunElevation(date, lat, lon){
+  const r = Math.PI/180;
+  const day = (date.getTime() - Date.UTC(date.getUTCFullYear(),0,0)) / 864e5;
+  const hour = date.getUTCHours() + date.getUTCMinutes()/60;
+  const decl = -23.44 * Math.cos(r * 360/365 * (day + 10));
+  const ha = (hour + lon/15 - 12) * 15;
+  return Math.asin(Math.sin(lat*r)*Math.sin(decl*r) + Math.cos(lat*r)*Math.cos(decl*r)*Math.cos(ha*r)) / r;
+}
+// Hvor mye kaldere bakken antas å være enn lufta. Klar, vindstille natt gir mest utstråling.
+function surfaceTemp(h, shade){
+  const clear = 1 - (h.cc ?? 60)/100;
+  const calm = Math.max(0, 1 - (h.ws ?? 3)/7);
+  const sunUp = !shade && sunElevation(new Date(h.ms), LOC.lat, LOC.lon) > 5;
+  let off = sunUp ? -0.5*clear : 0.5 + 2.5*clear*calm;
+  if (shade) off += 0.5;
+  return h.t - off;
+}
+
+/* ---------- Data ---------- */
+async function fetchForecast(){
+  const lat = Number(LOC.lat.toFixed(4)), lon = Number(LOC.lon.toFixed(4));
+  const res = await fetch(`${API}?lat=${lat}&lon=${lon}`, { headers:{ Accept:"application/json" } });
+  if (!res.ok) throw new Error(`MET svarte med status ${res.status}`);
+  return res.json();
+}
+// Lagrer timeverdier lokalt, slik at appen vet hva som har skjedd de siste døgnene.
+function mergeHistory(json){
+  const hist = store.get(KEY.hist, {});
+  for (const e of json.properties.timeseries){
+    const n1 = e.data.next_1_hours; if (!n1) continue;
+    const d = e.data.instant.details;
+    hist[e.time] = [d.air_temperature, d.dew_point_temperature ?? null, d.relative_humidity ?? null,
+      d.cloud_area_fraction ?? null, d.wind_speed ?? null, n1.details?.precipitation_amount ?? 0];
+  }
+  const cutoff = Date.now() - 4*864e5;
+  for (const k of Object.keys(hist)) if (Date.parse(k) < cutoff) delete hist[k];
+  store.set(KEY.hist, hist);
+  return Object.keys(hist).sort().map(k => {
+    const [t,td,rh,cc,ws,p] = hist[k];
+    return { ms:Date.parse(k), t, td, rh, cc, ws, p };
+  });
+}
+
+/* ---------- Vurdering for én time ---------- */
+function assess(series, idx, shade){
+  const W = shade ? 72 : 12;              // skyggen husker is i flere døgn
+  const start = Math.max(0, idx - W);
+  const limited = (series[idx].ms - series[start].ms)/36e5 < W*0.75;
+  const h = series[idx], ts = surfaceTemp(h, shade);
+  const out = (level, why) => ({ level, why, ts, limited });
+
+  if ((h.p||0) >= 0.2 && h.t <= 1.5) return out("stop", "Snø eller sludd.");
+  if ((h.p||0) >= 0.1 && ts <= 0)    return out("stop", "Nedbør på frossen bakke.");
+
+  let lastWet = -1, snow = false;
+  for (let i = start; i < idx; i++) if ((series[i].p||0) >= 0.1){ lastWet = i; snow = series[i].t <= 1; }
+  let dry = 0, minTs = ts;
+  if (lastWet >= 0) for (let i = lastWet; i <= idx; i++){
+    const s = series[i], st = surfaceTemp(s, shade);
+    minTs = Math.min(minTs, st);
+    if (i > lastWet && st > (shade ? 4 : 3) && (s.rh ?? 90) < 90) dry++;
+  }
+  const stillWet = lastWet >= 0 && dry < (shade ? 12 : 3);
+
+  if (stillWet && ts <= 0.5) return out("stop", shade
+    ? (snow ? "Snø fra de siste døgnene ligger trolig fortsatt i skyggen." : "Nedbør de siste døgnene har frosset og ikke fått tørke.")
+    : (snow ? "Snø siste døgn og kuldegrader." : "Våt bakke har frosset."));
+  if (stillWet && minTs <= 0 && ts <= 2.5) return out("caution", "Bakken har vært frossen etter nedbør. Glatte flekker er sannsynlig.");
+  if (stillWet && ts <= 2) return out("caution", "Våt bakke rundt frysepunktet.");
+
+  for (let i = Math.max(0, idx-6); i <= idx; i++){
+    const s = series[i], st = surfaceTemp(s, shade);
+    if (st <= 0 && s.td != null && s.td >= st - 0.5 && (s.rh ?? 0) >= 85)
+      return out("caution", "Fuktig luft mot frossen bakke. Fare for rimfrost.");
+  }
+  if (ts <= 0 && (h.rh ?? 0) >= 85) return out("caution", "Kuldegrader og høy luftfuktighet.");
+  if (ts <= 0) return out("go", "Kaldt, men tørt.");
+  if ((h.p||0) >= 0.1 || stillWet) return out("go", "Vått, men godt over null.");
+  return out("go", "Tørt og over null.");
+}
+
+/* ---------- Grovt anslag for dager uten timevarsel ---------- */
+const localKey = d => d.toLocaleDateString("sv-SE"); // ÅÅÅÅ-MM-DD i lokal tid
+function buildDays(json){
+  const days = new Map();
+  for (const e of json.properties.timeseries){
+    const d = new Date(e.time), k = localKey(d), t = e.data.instant.details.air_temperature;
+    if (!days.has(k)) days.set(k, { key:k, min:Infinity, max:-Infinity, p:0, pts:[] });
+    const day = days.get(k);
+    day.min = Math.min(day.min, t); day.max = Math.max(day.max, t);
+    day.pts.push({ hr: d.getHours() + d.getMinutes()/60, t });
+    const n1 = e.data.next_1_hours, n6 = e.data.next_6_hours;
+    if (n1) day.p += n1.details?.precipitation_amount || 0;
+    else if (n6) day.p += n6.details?.precipitation_amount || 0;
+  }
+  return [...days.values()].sort((a, b) => a.key < b.key ? -1 : 1);
+}
+function roughTrip(days, i, shade, hour){
+  const d = days[i], prev = days[i-1];
+  const near = w => d.pts.filter(p => Math.abs(p.hr - hour) <= w).map(p => p.t);
+  const temps = near(3).length ? near(3) : near(5).length ? near(5) : [d.min];
+  const m = Math.min(...temps);
+  const wet = (prev ? prev.p : 0) + d.p * (hour >= 12 ? 0.6 : 0.3);
+  let p3 = d.p * 0.5; for (let k = 1; k <= 3 && days[i-k]; k++) p3 += days[i-k].p;
+  if (shade && m <= 1 && p3 >= 1) return "stop";
+  if (shade && m <= 2 && p3 >= 0.5) return "caution";
+  if (m <= 0 && wet >= 0.5) return "stop";
+  if (m <= 2 && wet >= 0.5) return "caution";
+  if (m <= 0) return "caution";
+  return "go";
+}
+
+/* ---------- Tekst og symboler ---------- */
+const RANK = { go:0, caution:1, stop:2 };
+const WORD = { go:"Kjør", caution:"Kjør forsiktig", stop:"Glatt" };
+const DAYS = ["søn","man","tir","ons","tor","fre","lør"];
+const worst = (a, b) => RANK[a] >= RANK[b] ? a : b;
+const fmt = n => (n == null || isNaN(n)) ? "–" : `${n > 0 ? "+" : ""}${n.toFixed(1).replace(".", ",")}°`;
+const deg = n => `${Math.round(n)}°`;
+const mm = n => `${n.toFixed(1).replace(".", ",")} mm`;
+const hhmm = d => d.toLocaleTimeString("nb-NO", { hour:"2-digit", minute:"2-digit" });
+
+// Samlet ord for vei + skygge. Kort variant brukes i små flater.
+function combo(road, shade, short){
+  if (road === "go" && shade === "go") return short ? "Fint" : "Fint føre";
+  if (road === "go") return shade === "stop"
+    ? (short ? "Is v/blokka" : "Glatt ved blokka")
+    : (short ? "Forsiktig" : "Forsiktig ved blokka");
+  return worst(road, shade) === "stop" ? "Glatt" : (short ? "Forsiktig" : "Kjør forsiktig");
+}
+function advice(road, shade){
+  if (road.level === "go" && shade.level === "go") return "Fint føre hele veien.";
+  if (road.level === "go") return "Ta det rolig, eller trill, de første 30 sekundene. Resten ser fint ut.";
+  if (road.level === "stop") return "Glatt også utenfor skyggen. Vurder et annet fremkomstmiddel.";
+  return "Senk farten og unngå brå bremsing.";
+}
+function sign(level){
+  const c = `var(--${level})`;
+  if (level === "go") return `<svg class="sign" viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="20" fill="none" stroke="${c}" stroke-width="5"/><path d="M15 24l6 6 12-13" fill="none" stroke="${c}" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+  return `<svg class="sign" viewBox="0 0 48 48" aria-hidden="true"><path d="M24 5L44 41H4Z" fill="none" stroke="${c}" stroke-width="5" stroke-linejoin="round"/><path d="M24 18v11" stroke="${c}" stroke-width="5" stroke-linecap="round"/><circle cx="24" cy="35" r="2.8" fill="${c}"/></svg>`;
+}
+const dots = (r, s) => `<span class="dot b-${r}" title="Vei: ${WORD[r]}"></span><span class="dot b-${s}" title="Skygge: ${WORD[s]}"></span>`;
+
+/* ---------- Tidspunkt for turene ---------- */
+const tripTimes = () => [
+  { id:"job",  name:"Til jobb", short:"jobb", time: $("tJob").value  || "08:40" },
+  { id:"home", name:"Hjem",     short:"hjem", time: $("tHome").value || "17:00" },
+];
+const hm = s => s.split(":").map(Number);
+function nextOccurrence(time){
+  const [h, m] = hm(time), d = new Date(); d.setHours(h, m, 0, 0);
+  if (d.getTime() < Date.now() - 20*60e3) d.setDate(d.getDate() + 1);   // litt slingringsmonn rett etter avreise
+  return d;
+}
+const hourMs = ms => Math.floor(ms / 36e5) * 36e5;
+const hourIndex = (series, ms) => series.findIndex(s => s.ms === hourMs(ms));
+
+/* ---------- Visning ---------- */
+function render(series, json){
+  const nowMs = Date.now();
+  let idx = hourIndex(series, nowMs);
+  if (idx < 0) idx = series.findIndex(s => s.ms > nowMs);
+  if (idx < 0){ setStatus("Varselet mangler data for nå.", true); return; }
+
+  // Akkurat nå
+  const road = assess(series, idx, false), shade = assess(series, idx, true);
+  const nowLvl = worst(road.level, shade.level), h = series[idx];
+  $("now").dataset.level = nowLvl;
+  $("nowMeta").innerHTML = `kl. ${hhmm(new Date())} &nbsp;<strong>${deg(h.t)}</strong>`;
+  $("nowSign").innerHTML = sign(nowLvl);
+  $("nowBig").textContent = combo(road.level, shade.level, false);
+  $("nowAdvice").textContent = advice(road, shade);
+  $("nowParts").innerHTML = [["Veien", road], ["Ved blokka", shade]].map(([n, a]) =>
+    `<div><span class="dot b-${a.level}"></span><b class="c-${a.level}">${n}: ${WORD[a.level]}</b><span>${a.why}</span></div>`).join("");
+
+  // Dine turer
+  const todayKey = localKey(new Date()), trips = tripTimes(), tripHours = new Map();
+  $("trips").innerHTML = trips.map(t => {
+    const when = nextOccurrence(t.time), i = hourIndex(series, when.getTime());
+    tripHours.set(hourMs(when.getTime()), t.short);
+    const day = localKey(when) === todayKey ? "i dag" : "i morgen";
+    if (i < 0) return `<div class="trip"><div class="lbl"><strong>${t.name}</strong><br>${day} ${t.time}</div><div class="v">Ukjent</div></div>`;
+    const r = assess(series, i, false), s = assess(series, i, true), lvl = worst(r.level, s.level);
+    const p = (series[i].p || 0) >= 0.1 ? `, ${mm(series[i].p)}` : "";
+    return `<div class="trip" data-level="${lvl}">
+      <div class="lbl"><strong>${t.name}</strong><br>${day} ${t.time}</div>
+      <div class="v">${combo(r.level, s.level, false)}</div>
+      <div class="meta"><span>${deg(series[i].t)}${p}</span><span class="dots">${dots(r.level, s.level)}</span></div>
+    </div>`;
+  }).join("");
+  $("limited").hidden = !shade.limited;
+
+  // Neste 24 timer
+  const cells = [];
+  for (let i = idx; i < series.length && series[i].ms < series[idx].ms + 24*36e5; i++){
+    const s = series[i], r = assess(series, i, false), sh = assess(series, i, true);
+    const d = new Date(s.ms), isTrip = tripHours.has(s.ms);
+    const tag = isTrip ? tripHours.get(s.ms) : (d.getHours() === 0 ? DAYS[d.getDay()] : "");
+    const cls = ["hour", i === idx ? "now-h" : "", isTrip ? "trip-h" : ""].join(" ").trim();
+    cells.push(`<div class="${cls}"><div class="tag">${tag}</div><div class="h">${i === idx ? "nå" : String(d.getHours()).padStart(2, "0")}</div>
+      <div class="t">${deg(s.t)}</div><div class="p">${(s.p||0) >= 0.1 ? s.p.toFixed(1).replace(".", ",") : ""}</div>
+      <div class="dots">${dots(r.level, sh.level)}</div></div>`);
+  }
+  $("hours").innerHTML = cells.join("");
+
+  // Neste 7 dager
+  $("hJob").textContent = `Jobb ${trips[0].time}`;
+  $("hHome").textContent = `Hjem ${trips[1].time}`;
+  const days = buildDays(json), rows = [];
+  days.forEach((d, i) => {
+    if (d.key <= todayKey || rows.length >= 7 || !isFinite(d.min)) return;
+    const chips = trips.map(t => {
+      const [hh, mi] = hm(t.time);
+      const at = new Date(`${d.key}T${String(hh).padStart(2,"0")}:${String(mi).padStart(2,"0")}:00`).getTime();
+      const si = hourIndex(series, at);
+      const r = si >= 0 ? assess(series, si, false).level : roughTrip(days, i, false, hh + mi/60);
+      const s = si >= 0 ? assess(series, si, true).level  : roughTrip(days, i, true,  hh + mi/60);
+      return `<span class="chip" data-level="${worst(r, s)}">${dots(r, s)}${combo(r, s, true)}</span>`;
+    });
+    const dt = new Date(`${d.key}T12:00:00`);
+    rows.push(`<div class="wk-row"><span class="d">${DAYS[dt.getDay()]} ${dt.getDate()}.</span>
+      <span class="tmp">${deg(d.min)} / ${deg(d.max)}${d.p >= 0.1 ? `<span class="pr">${mm(d.p)}</span>` : ""}</span>
+      ${chips.join("")}</div>`);
+  });
+  $("week").innerHTML = rows.join("");
+
+  // Detaljer
+  let rain12 = 0, minNight = Infinity;
+  for (let i = Math.max(0, idx-12); i < idx; i++){ rain12 += series[i].p || 0; minNight = Math.min(minNight, series[i].t); }
+  $("facts").innerHTML = [
+    ["Lufttemperatur", fmt(h.t)],
+    ["Anslått bakke, vei", fmt(road.ts)],
+    ["Anslått bakke, skygge", fmt(shade.ts)],
+    ["Laveste siste 12 t", isFinite(minNight) ? fmt(minNight) : "–"],
+    ["Nedbør siste 12 t", mm(rain12)],
+    ["Luftfuktighet", h.rh != null ? `${Math.round(h.rh)} %` : "–"],
+    ["Vind", h.ws != null ? `${h.ws.toFixed(1).replace(".", ",")} m/s` : "–"],
+  ].map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join("");
+
+  $("result").hidden = false;
+  setStatus(`Oppdatert ${hhmm(new Date())}`);
+}
+
+function setStatus(text, isError){ const s = $("status"); s.textContent = text; s.classList.toggle("error", !!isError); }
+
+let SERIES = null, JSON_DATA = null, busy = false;
+async function refresh(){
+  if (busy) return; busy = true;
+  $("place").textContent = LOC.name || `${LOC.lat.toFixed(3)}, ${LOC.lon.toFixed(3)}`;
+  try{
+    JSON_DATA = await fetchForecast();
+    SERIES = mergeHistory(JSON_DATA);
+    render(SERIES, JSON_DATA);
+  }catch{
+    if (SERIES){ render(SERIES, JSON_DATA); setStatus("Fikk ikke kontakt med MET. Viser sist hentede data.", true); }
+    else setStatus("Fikk ikke hentet værdata. Sjekk nettet.", true);
+  }finally{ busy = false; }
+}
+
+function setLoc(lat, lon, name){
+  LOC = { lat, lon, name: name || null }; store.set(KEY.loc, LOC);
+  store.set(KEY.hist, {});   // ny posisjon, ny historikk
+  SERIES = null; refresh();
+}
+
+// Postnummer slås opp i Kartverkets adresseregister. Vi tar snittet av adressene i postnummeret.
+async function lookupZip(){
+  const zip = $("zip").value.trim();
+  if (!/^\d{4}$/.test(zip)){ $("setMsg").textContent = "Postnummer må være fire siffer."; return; }
+  $("setMsg").textContent = "Slår opp postnummer …";
+  try{
+    const res = await fetch(`https://ws.geonorge.no/adresser/v1/sok?postnummer=${zip}&treffPerSide=200&utkoordsys=4258`);
+    if (!res.ok) throw new Error(res.status);
+    const pts = ((await res.json()).adresser || []).filter(a => a.representasjonspunkt);
+    if (!pts.length){ $("setMsg").textContent = `Fant ingen adresser med postnummer ${zip}. Postboksnumre virker ikke.`; return; }
+    const lat = pts.reduce((n, a) => n + a.representasjonspunkt.lat, 0) / pts.length;
+    const lon = pts.reduce((n, a) => n + a.representasjonspunkt.lon, 0) / pts.length;
+    const ps = pts[0].poststed || "";
+    const name = `${zip} ${ps.charAt(0)}${ps.slice(1).toLowerCase()}`.trim();
+    $("setMsg").textContent = `Posisjon lagret: ${name}.`;
+    setLoc(lat, lon, name);
+  }catch{ $("setMsg").textContent = "Fikk ikke slått opp postnummeret. Prøv igjen."; }
+}
+$("saveZip").addEventListener("click", lookupZip);
+$("zip").addEventListener("keydown", e => { if (e.key === "Enter") lookupZip(); });
+$("resetOslo").addEventListener("click", () => {
+  store.del(KEY.loc); $("zip").value = ""; $("setMsg").textContent = "Viser Oslo sentrum.";
+  setLoc(DEFAULT_LOC.lat, DEFAULT_LOC.lon, DEFAULT_LOC.name);
+});
+$("useGps").addEventListener("click", () => {
+  if (!navigator.geolocation){ $("setMsg").textContent = "Posisjon er ikke tilgjengelig her."; return; }
+  $("setMsg").textContent = "Finner posisjon …";
+  navigator.geolocation.getCurrentPosition(
+    p => { $("setMsg").textContent = "Posisjon lagret."; setLoc(p.coords.latitude, p.coords.longitude, "Min posisjon"); },
+    () => { $("setMsg").textContent = "Fikk ikke posisjon. Gi nettleseren tilgang, eller bruk postnummer."; },
+    { enableHighAccuracy:false, timeout:15000 }
+  );
+});
+for (const [id, key] of [["tJob", KEY.job], ["tHome", KEY.home]]){
+  $(id).value = store.get(key, $(id).value);
+  $(id).addEventListener("change", () => { store.set(key, $(id).value); if (SERIES) render(SERIES, JSON_DATA); });
+}
+setInterval(() => { if (document.visibilityState === "visible") refresh(); }, 15*60e3);
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") refresh(); });
+refresh();
+if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
+})();
+</script>
+</body>
+</html>
